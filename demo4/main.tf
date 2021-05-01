@@ -23,9 +23,9 @@ variable "environment_tag" {}
 ## PROVIDERS
 
 provider "aws" {
-  access_key    = var.aws_access_key
-  secret_key    = var.aws_secret_key
-  region        = var.region
+  access_key = var.aws_access_key
+  secret_key = var.aws_secret_key
+  region     = var.region
 }
 
 ## LOCALS
@@ -35,7 +35,7 @@ locals {
     BillingCode = var.billing_code_tag
     Environment = var.environment_tag
   }
-  s3_bucket_name = join("-",list(var.bucket_name_prefix,var.environment_tag,random_integer.random.result))
+  s3_bucket_name = join("-", list(var.bucket_name_prefix, var.environment_tag, random_integer.random.result))
 }
 
 ## DATA
@@ -44,7 +44,7 @@ data "aws_availability_zones" "available" {}
 
 data "aws_ami" "aws-ubuntu" {
   most_recent = true
-  owners = ["099720109477"] # Canonical
+  owners      = ["099720109477"] # Canonical
   filter {
     name   = "name"
     values = ["ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-*"]
@@ -57,18 +57,18 @@ data "aws_ami" "aws-ubuntu" {
 
 data "aws_ami" "aws-linux" {
   most_recent = true
-  owners = [ "amazon" ]
+  owners      = ["amazon"]
   filter {
-    name    = "name"
-    values = [ "amzn-ami-hvm*" ]
+    name   = "name"
+    values = ["amzn-ami-hvm*"]
   }
   filter {
-    name    = "root-device-type"
-    values = [ "ebs" ]
+    name   = "root-device-type"
+    values = ["ebs"]
   }
   filter {
-    name    = "virtualization-type"
-    values = [ "hvm" ]
+    name   = "virtualization-type"
+    values = ["hvm"]
   }
 }
 
@@ -80,30 +80,30 @@ resource "random_integer" "random" {
 }
 
 resource "aws_vpc" "vpc" {
-  cidr_block            = var.network_address_space
-  enable_dns_hostnames  = "true"
-  tags  = merge(local.common_tags, {Name = join("-", list(var.environment_tag,"vpc"))})
+  cidr_block           = var.network_address_space
+  enable_dns_hostnames = "true"
+  tags                 = merge(local.common_tags, { Name = join("-", list(var.environment_tag, "vpc")) })
 }
 
 resource "aws_internet_gateway" "igw" {
-  vpc_id    =   aws_vpc.vpc.id
-  tags  = merge(local.common_tags, {Name = join("-", list(var.environment_tag,"igw"))})
+  vpc_id = aws_vpc.vpc.id
+  tags   = merge(local.common_tags, { Name = join("-", list(var.environment_tag, "igw")) })
 }
 
 resource "aws_subnet" "subnet1" {
-  cidr_block = var.subnet1_address_space
-  vpc_id     = aws_vpc.vpc.id
+  cidr_block              = var.subnet1_address_space
+  vpc_id                  = aws_vpc.vpc.id
   map_public_ip_on_launch = "true"
-  availability_zone = data.aws_availability_zones.available.names[0]
-  tags  = merge(local.common_tags, {Name = join("-", list(var.environment_tag,"subnet1"))})
+  availability_zone       = data.aws_availability_zones.available.names[0]
+  tags                    = merge(local.common_tags, { Name = join("-", list(var.environment_tag, "subnet1")) })
 }
 
 resource "aws_subnet" "subnet2" {
-  cidr_block = var.subnet2_address_space
-  vpc_id     = aws_vpc.vpc.id
+  cidr_block              = var.subnet2_address_space
+  vpc_id                  = aws_vpc.vpc.id
   map_public_ip_on_launch = "true"
-  availability_zone = data.aws_availability_zones.available.names[1]
-  tags  = merge(local.common_tags, {Name = join("-", list(var.environment_tag,"subnet2"))})
+  availability_zone       = data.aws_availability_zones.available.names[1]
+  tags                    = merge(local.common_tags, { Name = join("-", list(var.environment_tag, "subnet2")) })
 }
 
 resource "aws_route_table" "rtb" {
@@ -113,96 +113,96 @@ resource "aws_route_table" "rtb" {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.igw.id
   }
-  tags  = merge(local.common_tags, {Name = join("-", list(var.environment_tag,"rt"))})
+  tags = merge(local.common_tags, { Name = join("-", list(var.environment_tag, "rt")) })
 }
 
 resource "aws_route_table_association" "rta-subnet1" {
-  subnet_id = aws_subnet.subnet1.id
+  subnet_id      = aws_subnet.subnet1.id
   route_table_id = aws_route_table.rtb.id
 }
 
 resource "aws_route_table_association" "rta-subnet2" {
-  subnet_id = aws_subnet.subnet2.id
+  subnet_id      = aws_subnet.subnet2.id
   route_table_id = aws_route_table.rtb.id
 }
 
 resource "aws_security_group" "elb-sg" {
-  name = "nginx_elb_sg"
+  name   = "nginx_elb_sg"
   vpc_id = aws_vpc.vpc.id
-  tags  = merge(local.common_tags, {Name = join("-", list(var.environment_tag,"elb","sg"))})
-  
+  tags   = merge(local.common_tags, { Name = join("-", list(var.environment_tag, "elb", "sg")) })
+
   ingress {
-    cidr_blocks = [ "0.0.0.0/0" ]
-    from_port = 80
-    to_port = 80
-    protocol = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
   }
 
   egress {
-    cidr_blocks = [ "0.0.0.0/0" ]
-    from_port = 0
-    protocol = -1
-    to_port = 0
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port   = 0
+    protocol    = -1
+    to_port     = 0
   }
 }
 
 resource "aws_security_group" "nginx-sg" {
-  name = "nginx_sg"
+  name        = "nginx_sg"
   description = "Allow ports for nginx"
-  vpc_id = aws_vpc.vpc.id
-  tags  = merge(local.common_tags, {Name = join("-", list(var.environment_tag,"ec2","sg"))})
-  
+  vpc_id      = aws_vpc.vpc.id
+  tags        = merge(local.common_tags, { Name = join("-", list(var.environment_tag, "ec2", "sg")) })
+
   ingress {
-    cidr_blocks = [ "0.0.0.0/0" ]
-    from_port = 22
-    to_port = 22
-    protocol = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
   }
-  
+
   ingress {
-    cidr_blocks = [ var.network_address_space ]
-    from_port = 80
-    to_port = 80
-    protocol = "tcp"
+    cidr_blocks = [var.network_address_space]
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
   }
 
   egress {
-    cidr_blocks = [ "0.0.0.0/0" ]
-    from_port = 0
-    protocol = -1
-    to_port = 0
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port   = 0
+    protocol    = -1
+    to_port     = 0
   }
 }
 
 resource "aws_elb" "web" {
-  name = "nginx-elb"
-  subnets = [ aws_subnet.subnet1.id, aws_subnet.subnet2.id ]
-  security_groups = [ aws_security_group.elb-sg.id ]
-  instances = [ aws_instance.nginx1.id,aws_instance.nginx2.id ]
-  tags  = merge(local.common_tags, {Name = join("-", list(var.environment_tag,"elb"))})
+  name            = "nginx-elb"
+  subnets         = [aws_subnet.subnet1.id, aws_subnet.subnet2.id]
+  security_groups = [aws_security_group.elb-sg.id]
+  instances       = [aws_instance.nginx1.id, aws_instance.nginx2.id]
+  tags            = merge(local.common_tags, { Name = join("-", list(var.environment_tag, "elb")) })
 
 
   listener {
-    instance_port = 80
+    instance_port     = 80
     instance_protocol = "http"
-    lb_port       = 80
+    lb_port           = 80
     lb_protocol       = "http"
   }
 }
 
 resource "aws_instance" "nginx1" {
-  ami = data.aws_ami.aws-linux.id
-  instance_type = "t2.micro"
-  subnet_id = aws_subnet.subnet1.id
-  key_name = var.key_name
-  vpc_security_group_ids = [ aws_security_group.nginx-sg.id ]
-  iam_instance_profile = aws_iam_instance_profile.nginx_profile.name
-  tags  = merge(local.common_tags, {Name = join("-", list(var.environment_tag,"ec2","linux"))})
+  ami                    = data.aws_ami.aws-linux.id
+  instance_type          = "t2.micro"
+  subnet_id              = aws_subnet.subnet1.id
+  key_name               = var.key_name
+  vpc_security_group_ids = [aws_security_group.nginx-sg.id]
+  iam_instance_profile   = aws_iam_instance_profile.nginx_profile.name
+  tags                   = merge(local.common_tags, { Name = join("-", list(var.environment_tag, "ec2", "linux")) })
 
   connection {
-    type    = "ssh"
-    host    = self.public_ip
-    user    = "ec2-user"
+    type        = "ssh"
+    host        = self.public_ip
+    user        = "ec2-user"
     private_key = file(var.private_key_path)
   }
 
@@ -214,12 +214,12 @@ resource "aws_instance" "nginx1" {
   use_https = True
   bucket_location = US
   EOF
-    
+
     destination = "/home/ec2-user/.s3cfg"
   }
 
   provisioner "file" {
-    content = <<EOF
+    content     = <<EOF
   /var/log/nginx/*log {
     daily
     rotate 10
@@ -240,34 +240,34 @@ resource "aws_instance" "nginx1" {
 
   provisioner "remote-exec" {
     inline = [
-        "sudo yum install nginx -y",
-        "sudo service nginx start",
-        "sudo cp /home/ec2-user/.s3cfg /root/.s3cfg",
-        "sudo cp /home/ec2-user/nginx /etc/logrotate.d/nginx",
-        "sudo pip install s3cmd",
-        "s3cmd get s3://${aws_s3_bucket.web_bucket.id}/website/index.html .",
-        "s3cmd get s3://${aws_s3_bucket.web_bucket.id}/website/logo.png .",
-        "sudo cp /home/ec2-user/index.html /usr/share/nginx/html/index.html",
-        "sudo cp /home/ec2-user/logo.png /usr/share/nginx/html/logo.png",
-        "sudo logrotate -f /etc/logrotate.conf"
+      "sudo yum install nginx -y",
+      "sudo service nginx start",
+      "sudo cp /home/ec2-user/.s3cfg /root/.s3cfg",
+      "sudo cp /home/ec2-user/nginx /etc/logrotate.d/nginx",
+      "sudo pip install s3cmd",
+      "s3cmd get s3://${aws_s3_bucket.web_bucket.id}/website/index.html .",
+      "s3cmd get s3://${aws_s3_bucket.web_bucket.id}/website/logo.png .",
+      "sudo cp /home/ec2-user/index.html /usr/share/nginx/html/index.html",
+      "sudo cp /home/ec2-user/logo.png /usr/share/nginx/html/logo.png",
+      "sudo logrotate -f /etc/logrotate.conf"
     ]
   }
 }
 
 resource "aws_instance" "nginx2" {
-  ami = data.aws_ami.aws-ubuntu.id
-  instance_type = "t2.micro"
-  subnet_id = aws_subnet.subnet2.id
-  key_name = var.key_name
-  vpc_security_group_ids = [ aws_security_group.nginx-sg.id ]
-  iam_instance_profile = aws_iam_instance_profile.nginx_profile.name
-  tags  = merge(local.common_tags, {Name = join("-", list(var.environment_tag,"ec2","ubuntu"))})
+  ami                    = data.aws_ami.aws-ubuntu.id
+  instance_type          = "t2.micro"
+  subnet_id              = aws_subnet.subnet2.id
+  key_name               = var.key_name
+  vpc_security_group_ids = [aws_security_group.nginx-sg.id]
+  iam_instance_profile   = aws_iam_instance_profile.nginx_profile.name
+  tags                   = merge(local.common_tags, { Name = join("-", list(var.environment_tag, "ec2", "ubuntu")) })
 
 
   connection {
-    type    = "ssh"
-    host    = self.public_ip
-    user    = "ubuntu"
+    type        = "ssh"
+    host        = self.public_ip
+    user        = "ubuntu"
     private_key = file(var.private_key_path)
   }
 
@@ -279,12 +279,12 @@ security_token =
 use_https = True
 bucket_location = US
   EOF
-    
+
     destination = "/home/ubuntu/.s3cfg"
   }
 
   provisioner "file" {
-    content = <<EOF
+    content     = <<EOF
 /var/log/nginx/*log {
   daily
   rotate 10
@@ -304,19 +304,19 @@ bucket_location = US
 
   provisioner "remote-exec" {
     inline = [
-        "sudo apt install nginx -y",
-        "sudo service nginx start",
-        "sudo cp /home/ubuntu/.s3cfg /root/.s3cfg",
-        "sudo cp /home/ubuntu/nginx /etc/logrotate.d/nginx",
-        "sudo apt update",
-        "sudo apt install python3-pip -y",
-        "sudo pip3 install s3cmd",
-        "s3cmd get s3://${aws_s3_bucket.web_bucket.id}/website/index.html .",
-        "s3cmd get s3://${aws_s3_bucket.web_bucket.id}/website/logo.png .",
-        "sudo rm /var/share/nginx/html/*.html",
-        "sudo cp /home/ubuntu/index.html /var/www/html/index.html",
-        "sudo cp /home/ubuntu/logo.png /var/www/html/logo.png",
-        "sudo logrotate -f /etc/logrotate.conf"
+      "sudo apt install nginx -y",
+      "sudo service nginx start",
+      "sudo cp /home/ubuntu/.s3cfg /root/.s3cfg",
+      "sudo cp /home/ubuntu/nginx /etc/logrotate.d/nginx",
+      "sudo apt update",
+      "sudo apt install python3-pip -y",
+      "sudo pip3 install s3cmd",
+      "s3cmd get s3://${aws_s3_bucket.web_bucket.id}/website/index.html .",
+      "s3cmd get s3://${aws_s3_bucket.web_bucket.id}/website/logo.png .",
+      "sudo rm /var/share/nginx/html/*.html",
+      "sudo cp /home/ubuntu/index.html /var/www/html/index.html",
+      "sudo cp /home/ubuntu/logo.png /var/www/html/logo.png",
+      "sudo logrotate -f /etc/logrotate.conf"
     ]
   }
 }
@@ -370,21 +370,21 @@ EOF
 }
 
 resource "aws_s3_bucket" "web_bucket" {
-  bucket = local.s3_bucket_name
-  acl    = "private"
+  bucket        = local.s3_bucket_name
+  acl           = "private"
   force_destroy = true
-  tags  = merge(local.common_tags, {Name = join("-", list(var.environment_tag,"web"))})
+  tags          = merge(local.common_tags, { Name = join("-", list(var.environment_tag, "web")) })
 }
 
 resource "aws_s3_bucket_object" "website" {
   bucket = aws_s3_bucket.web_bucket.bucket
-  key = "/website/index.html"
+  key    = "/website/index.html"
   source = "./index.html"
 }
 
 resource "aws_s3_bucket_object" "graphic" {
   bucket = aws_s3_bucket.web_bucket.bucket
-  key = "/website/logo.png"
+  key    = "/website/logo.png"
   source = "./logo.png"
 }
 
