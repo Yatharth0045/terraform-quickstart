@@ -26,6 +26,11 @@ terraform plan -out prod.tfplan
 
 terraform apply "prod.tfplan"
 
+terraform workspace list
+
+## To switch to another workspace
+terraform workspace select Development
+
 terraform output
 
 terraform destroy
