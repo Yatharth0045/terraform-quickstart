@@ -25,7 +25,7 @@ variable "ubuntu_instance_count" {
   default = 2
 }
 variable "linux_instance_count" {
-  default = 2  
+  default = 2
 }
 variable "subnet_count" {
   default = 2
