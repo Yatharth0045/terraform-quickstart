@@ -11,3 +11,5 @@ arm_password        = ""
 tenant_id           = ""
 dns_zone_name       = "globamantics.xyz"
 dns_resource_group  = "dns"
+ubuntu_instance_count = 4
+linux_instance_count = 3

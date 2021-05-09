@@ -1,64 +1,3 @@
-## VARIABLES
-
-variable "aws_access_key" {}
-variable "aws_secret_key" {}
-variable "private_key_path" {}
-variable "key_name" {}
-variable "region" {
-  default = "us-east-1"
-}
-variable "network_address_space" {
-  default = "10.1.0.0/16"
-}
-variable "subnet1_address_space" {
-  default = "10.1.0.0/24"
-}
-variable "subnet2_address_space" {
-  default = "10.1.1.0/24"
-}
-
-## PROVIDERS
-
-provider "aws" {
-  access_key = var.aws_access_key
-  secret_key = var.aws_secret_key
-  region     = var.region
-}
-
-## DATA
-
-data "aws_availability_zones" "available" {}
-
-data "aws_ami" "aws-ubuntu" {
-  most_recent = true
-  owners      = ["099720109477"] # Canonical
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-*"]
-  }
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-}
-
-data "aws_ami" "aws-linux" {
-  most_recent = true
-  owners      = ["amazon"]
-  filter {
-    name   = "name"
-    values = ["amzn-ami-hvm*"]
-  }
-  filter {
-    name   = "root-device-type"
-    values = ["ebs"]
-  }
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-}
-
 ## RESOURCES
 
 resource "aws_vpc" "vpc" {
@@ -209,10 +148,4 @@ resource "aws_instance" "nginx2" {
       "echo '<html><head><title>Green Team Server</title></head><body style=\"background-color:#77A032\"><p style=\"text-align: center;\"><span style=\"color:#FFFFFF;\"><span style=\"font-size:28px;\">Green Team</span></span></p></body></html>' | sudo tee /var/www/html/index.html"
     ]
   }
-}
-
-## OUTPUT
-
-output "aws_elb_public_dns" {
-  value = aws_elb.web.dns_name
 }
