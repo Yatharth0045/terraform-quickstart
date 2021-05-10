@@ -91,7 +91,7 @@ resource "aws_security_group" "nginx-sg" {
 }
 
 resource "aws_elb" "web" {
-  name            = "nginx-elb"
+  name            = "${local.env_name}-nginx-elb"
   subnets         = aws_subnet.subnet[*].id
   security_groups = [aws_security_group.elb-sg.id]
   instances       = concat(aws_instance.nginx1[*].id, aws_instance.nginx2[*].id)
