@@ -1,7 +1,7 @@
-# Demo 6
+# Demo 7
 
 ```
-cd demo6
+cd demo7
 
 terraform version
 ## Output: Terraform v0.12.19
