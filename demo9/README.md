@@ -23,7 +23,7 @@ terraform apply
 
 bash manaul-creation.sh
 
-## Updated tf vars
+## Update tf vars
 
 terraform plan
 
